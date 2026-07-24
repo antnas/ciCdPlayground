@@ -55,4 +55,16 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            junit '**/reports/**/*.xml'
+        }
+        success {
+            script {
+                currentBuild.description = "Deployed commit ${env.GIT_COMMIT?.take(7)}"
+                currentBuild.displayName = "#${env.BUILD_NUMBER} - success"
+            }
+        }
+    }
 }
