@@ -1,15 +1,20 @@
 name: CI
 
-on: 
+on:
   push:
   pull_request:
   workflow_dispatch:
-  
+    inputs:
+      version:
+        description: 'Version number to tag this commit with (e.g. 1.2.3)'
+        required: true
+        type: string
+
 permissions:
   checks: write
   pull-requests: write
   id-token: write
-  contents: read
+  contents: write
   pages: write
 
 jobs:
@@ -30,3 +35,16 @@ jobs:
       run: yarn build
     - name: Integration tests
       run: yarn test:e2e
+    - name: Tag commit with version
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a "v${{ inputs.version }}" -m "Release ${{ inputs.version }}"
+        git push origin "v${{ inputs.version }}"
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2.24.0
+      if: always()
+      with:
+        files: |
+          reports/**/*.xml
